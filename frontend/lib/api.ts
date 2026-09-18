@@ -202,6 +202,9 @@ export const api = {
   diet: (membershipCode: string) => request(`/diet/${membershipCode}`),
   myMemberships: () => request("/my/memberships"),
   review: (body: any) => request("/reviews", { method: "POST", body }),
+  raiseComplaint: (body: { gym_code: string; category: string; subject: string; details?: string }) =>
+    request("/complaints", { method: "POST", body }),
+  myComplaints: () => request("/complaints"),
 };
 
 /**
@@ -409,6 +412,14 @@ export const adminApi = {
     request(`/admin/complaints/${id}/action`, {
       method: "POST",
       body: { action, admin_action: adminAction },
+      role: "admin",
+    }),
+  warningPreview: (id: number) =>
+    request(`/admin/complaints/${id}/warning-preview`, { role: "admin" }),
+  sendWarning: (id: number, customMessage: string | null, adminNote?: string) =>
+    request(`/admin/complaints/${id}/send-warning`, {
+      method: "POST",
+      body: { custom_message: customMessage, admin_note: adminNote },
       role: "admin",
     }),
 

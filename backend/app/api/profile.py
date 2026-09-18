@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from ..core.config import settings
 from ..db.models import (
-    FitnessGoal, Gym, GymStatus, Membership, MembershipStatus, Review,
+    Complaint, FitnessGoal, Gym, GymStatus, Membership, MembershipStatus, Review,
 )
 from ..schemas.auth import UserProfileUpdate
 from .deps import AnyPrincipal, CurrentUser, DbSession
@@ -45,6 +45,16 @@ class ReviewRequest(BaseModel):
     rating: int = Field(ge=1, le=5)
     title: str | None = Field(default=None, max_length=150)
     comment: str | None = Field(default=None, max_length=2000)
+
+
+COMPLAINT_CATEGORIES = {"service_issue", "fraud", "safety", "billing", "other"}
+
+
+class UserComplaintRequest(BaseModel):
+    gym_code: str
+    category: str = Field(default="other")
+    subject: str = Field(min_length=3, max_length=200)
+    details: str | None = Field(default=None, max_length=2000)
 
 
 @router.put("/profile")
@@ -173,3 +183,51 @@ def write_review(payload: ReviewRequest, db: DbSession, user: CurrentUser):
 
     return {"success": True, "review_id": review.id, "created": created,
             "gym_rating": gym.rating, "review_count": gym.review_count}
+
+
+# --------------------------------------------------------------- complaints
+@router.post("/complaints", status_code=status.HTTP_201_CREATED)
+def raise_user_complaint(payload: UserComplaintRequest, db: DbSession, user: CurrentUser):
+    """
+    A member's escalation path against a gym - service problems, fraud,
+    safety issues, billing disputes. Goes to the admin only, mirroring the
+    gym-owner -> admin complaint flow: the member reports, the admin decides.
+    Restricted to gyms the member has actually joined, same rule as reviews.
+    """
+    gym = db.query(Gym).filter(Gym.gym_code == payload.gym_code.upper()).first()
+    if not gym or gym.status is not GymStatus.active:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Gym not found")
+
+    was_member = (db.query(Membership)
+                  .filter(Membership.user_id == user.id,
+                          Membership.gym_id == gym.id,
+                          Membership.status != MembershipStatus.pending_payment)
+                  .first())
+    if not was_member:
+        raise HTTPException(status.HTTP_403_FORBIDDEN,
+                            "Only members of this gym can report it.")
+
+    category = payload.category if payload.category in COMPLAINT_CATEGORIES else "other"
+    c = Complaint(
+        gym_id=gym.id, raised_by_user_id=user.id,
+        category=category, subject=payload.subject, details=payload.details,
+        status="open",
+    )
+    db.add(c)
+    db.commit()
+    return {"success": True, "complaint_id": c.id,
+            "message": "Complaint sent to the Fitora admin for review."}
+
+
+@router.get("/complaints")
+def my_complaints(db: DbSession, user: CurrentUser):
+    rows = (db.query(Complaint)
+            .filter(Complaint.raised_by_user_id == user.id)
+            .order_by(Complaint.created_at.desc()).all())
+    return {"complaints": [{
+        "id": c.id, "gym_id": c.gym_id, "category": c.category,
+        "subject": c.subject, "details": c.details, "status": c.status,
+        "admin_action": c.admin_action,
+        "created_at": c.created_at.isoformat(),
+        "resolved_at": c.resolved_at.isoformat() if c.resolved_at else None,
+    } for c in rows]}

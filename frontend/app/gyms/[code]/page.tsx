@@ -2,18 +2,28 @@
 
 import { motion } from "framer-motion";
 import {
-  ArrowLeft, BadgeCheck, Clock, CreditCard, Dumbbell, Info, Instagram, Mail,
-  MapPin, MapPinned, MessageSquare, Phone, Search, Snowflake, Sparkles, Star,
-  User, Users, Wind,
+  ArrowLeft, BadgeCheck, Clock, CreditCard, Dumbbell, Flag, Info, Instagram,
+  Mail, MapPin, MapPinned, MessageSquare, Phone, Search, Snowflake, Sparkles,
+  Star, User, Users, Wind,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AppShell, type NavItem } from "@/components/AppShell";
-import { Avatar, Button, Chip, EmptyState, Skeleton } from "@/components/ui";
-import { api, getToken } from "@/lib/api";
+import {
+  Avatar, Button, Chip, EmptyState, Modal, Select, Skeleton, Textarea,
+} from "@/components/ui";
+import { api, ApiError, getToken } from "@/lib/api";
 import { cn, formatDate, getLocation, km, rupees } from "@/lib/utils";
+
+const COMPLAINT_CATEGORIES = [
+  { value: "service_issue", label: "Service issue" },
+  { value: "fraud", label: "Fraud / billing dispute" },
+  { value: "safety", label: "Safety concern" },
+  { value: "billing", label: "Billing problem" },
+  { value: "other", label: "Other" },
+];
 
 const NAV: NavItem[] = [
   { href: "/chat", label: "Find a gym", icon: MessageSquare },
@@ -32,6 +42,12 @@ export default function GymDetailPage() {
   const [tab, setTab] = useState<"overview" | "equipment" | "coaches" | "reviews">(
     "overview",
   );
+
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportCategory, setReportCategory] = useState("service_issue");
+  const [reportSubject, setReportSubject] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
 
   useEffect(() => {
     getLocation().then((loc) => {
@@ -71,6 +87,35 @@ export default function GymDetailPage() {
       return;
     }
     router.push(`/join/${code}`);
+  }
+
+  function openReport() {
+    if (!getToken("user")) {
+      router.push("/login");
+      return;
+    }
+    setReportOpen(true);
+  }
+
+  async function submitReport(e: React.FormEvent) {
+    e.preventDefault();
+    setReportBusy(true);
+    try {
+      await api.raiseComplaint({
+        gym_code: code,
+        category: reportCategory,
+        subject: reportSubject,
+        details: reportDetails || undefined,
+      });
+      toast.success("Sent to the Fitora admin for review.");
+      setReportOpen(false);
+      setReportSubject("");
+      setReportDetails("");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Could not send report");
+    } finally {
+      setReportBusy(false);
+    }
   }
 
   return (
@@ -373,6 +418,15 @@ export default function GymDetailPage() {
 
             {tab === "reviews" && (
               <div className="space-y-3">
+                <div className="flex justify-end">
+                  <button
+                    onClick={openReport}
+                    className="text-xs text-ink-500 hover:text-danger inline-flex items-center gap-1.5"
+                  >
+                    <Flag className="w-3 h-3" />
+                    Report this gym
+                  </button>
+                </div>
                 {gym.social.reviews.map((r: any) => (
                   <div key={r.id} className="card p-4">
                     <div className="flex items-center gap-3">
@@ -422,6 +476,39 @@ export default function GymDetailPage() {
           </div>
         </div>
       </div>
+
+      <Modal open={reportOpen} onClose={() => setReportOpen(false)} title="Report this gym">
+        <form onSubmit={submitReport} className="space-y-4">
+          <p className="text-sm text-ink-400">
+            This goes to the Fitora admin, not the gym. Only members who have
+            joined this gym can report it.
+          </p>
+          <Select
+            label="Category"
+            value={reportCategory}
+            onChange={(e) => setReportCategory(e.target.value)}
+          >
+            {COMPLAINT_CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </Select>
+          <input
+            className="input"
+            placeholder="Subject"
+            value={reportSubject}
+            onChange={(e) => setReportSubject(e.target.value)}
+            required
+          />
+          <Textarea
+            placeholder="What happened? (optional)"
+            value={reportDetails}
+            onChange={(e) => setReportDetails(e.target.value)}
+          />
+          <Button type="submit" loading={reportBusy} variant="danger" className="w-full">
+            Send to admin
+          </Button>
+        </form>
+      </Modal>
     </AppShell>
   );
 }

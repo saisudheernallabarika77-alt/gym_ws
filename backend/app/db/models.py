@@ -488,16 +488,27 @@ class Admin(Base):
 
 
 class Complaint(Base):
-    """Gym owner -> admin. Owners can only report; admin decides."""
+    """
+    Two directions into the same table, both -> admin only (admin is the sole
+    decision-maker in either direction):
+      * Gym owner -> admin, about a member (raised_by_owner_id set,
+        against_user_id set) - e.g. a payment default.
+      * Member -> admin, about a gym (raised_by_user_id set, gym_id set) -
+        e.g. a service complaint, fraud, or safety issue.
+    Exactly one of raised_by_owner_id / raised_by_user_id is set per row.
+    """
     __tablename__ = "complaints"
 
     id = Column(Integer, primary_key=True)
     gym_id = Column(Integer, ForeignKey("gyms.id"), index=True)
     raised_by_owner_id = Column(Integer, ForeignKey("gym_owners.id"), index=True)
+    raised_by_user_id = Column(Integer, ForeignKey("users.id"), index=True)
     against_user_id = Column(Integer, ForeignKey("users.id"), index=True)
     membership_id = Column(Integer, ForeignKey("memberships.id"))
 
-    category = Column(String(60))         # payment_default / misconduct / damage / other
+    # payment_default / misconduct / damage / other (owner->admin)
+    # service_issue / fraud / safety / billing / other (user->admin)
+    category = Column(String(60))
     subject = Column(String(200), nullable=False)
     details = Column(Text)
     status = Column(String(30), default="open")   # open / reviewing / resolved / dismissed

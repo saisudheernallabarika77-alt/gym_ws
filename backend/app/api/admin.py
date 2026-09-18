@@ -106,6 +106,13 @@ class ComplaintActionRequest(BaseModel):
     admin_action: str = Field(min_length=3, max_length=1000)
 
 
+class ComplaintWarningRequest(BaseModel):
+    # None/omitted = use the auto-generated template for the complaint's
+    # category; a non-empty string = send exactly that instead.
+    custom_message: str | None = Field(default=None, max_length=2000)
+    admin_note: str | None = Field(default=None, max_length=500)
+
+
 # ------------------------------------------------------------------ helpers
 def serialize_gym_for_rag(db, gym: Gym) -> dict[str, Any]:
     """Shape a DB gym exactly like the dataset JSON so the RAG builders work."""
@@ -927,18 +934,29 @@ def list_complaints(db: DbSession, admin: CurrentAdmin, status_filter: str | Non
         q = q.filter(Complaint.status == status_filter)
     rows = q.order_by(Complaint.created_at.desc()).all()
 
+    def _raised_by(c: Complaint) -> dict:
+        if c.raised_by_owner_id:
+            o = db.get(GymOwner, c.raised_by_owner_id)
+            return {"role": "gym_owner", "name": o.full_name, "email": o.email} if o else None
+        if c.raised_by_user_id:
+            u = db.get(User, c.raised_by_user_id)
+            return {"role": "user", "name": u.full_name, "email": u.email} if u else None
+        return None
+
     return {"complaints": [{
         "id": c.id, "subject": c.subject, "category": c.category,
         "details": c.details, "status": c.status, "admin_action": c.admin_action,
         "created_at": c.created_at.isoformat(),
         "resolved_at": c.resolved_at.isoformat() if c.resolved_at else None,
+        # "owner_to_admin" (about a member) vs "user_to_admin" (about a gym) -
+        # the admin UI uses this to show the right counterpart field.
+        "direction": "owner_to_admin" if c.raised_by_owner_id else "user_to_admin",
         "gym": (lambda g: {"gym_code": g.gym_code, "name": g.name} if g else None)(
             db.get(Gym, c.gym_id)),
         "against_user": (lambda u: {"id": u.id, "name": u.full_name,
                                     "phone": u.phone, "status": u.status.value}
                          if u else None)(db.get(User, c.against_user_id)),
-        "raised_by": (lambda o: {"name": o.full_name, "email": o.email}
-                      if o else None)(db.get(GymOwner, c.raised_by_owner_id)),
+        "raised_by": _raised_by(c),
     } for c in rows]}
 
 
@@ -959,6 +977,100 @@ def act_on_complaint(complaint_id: int, payload: ComplaintActionRequest,
          {"action": payload.action})
     db.commit()
     return {"success": True, "complaint_id": complaint_id, "status": c.status}
+
+
+@router.get("/complaints/{complaint_id}/warning-preview")
+def preview_complaint_warning(complaint_id: int, db: DbSession, admin: CurrentAdmin):
+    """
+    What the auto-generated warning would say for this complaint, so the
+    admin's UI can show it pre-filled and let them edit before sending -
+    "type it themselves" and "auto" are really the same send action with
+    different starting text.
+    """
+    from ..services.email_service import default_warning_message
+
+    c = db.get(Complaint, complaint_id)
+    if not c:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Complaint not found")
+
+    recipient = None
+    if c.raised_by_owner_id:      # owner -> admin, about a member: warn the member
+        u = db.get(User, c.against_user_id) if c.against_user_id else None
+        recipient = {"kind": "user", "id": u.id, "name": u.full_name, "email": u.email} if u else None
+    elif c.raised_by_user_id:     # user -> admin, about a gym: warn the gym owner
+        gym = db.get(Gym, c.gym_id) if c.gym_id else None
+        owner = db.get(GymOwner, gym.owner_id) if gym and gym.owner_id else None
+        recipient = ({"kind": "gym_owner", "id": owner.id, "name": owner.full_name,
+                     "email": owner.email, "gym_name": gym.name}
+                    if owner else None)
+
+    return {
+        "complaint_id": complaint_id,
+        "category": c.category,
+        "subject": c.subject,
+        "auto_message": default_warning_message(c.category or "other"),
+        "recipient": recipient,
+        "can_send": recipient is not None,
+    }
+
+
+@router.post("/complaints/{complaint_id}/send-warning")
+def send_complaint_warning_action(complaint_id: int, payload: ComplaintWarningRequest,
+                                  db: DbSession, admin: CurrentAdmin):
+    """
+    Emails a warning to the complaint's target - auto-generated wording by
+    default, or the admin's own typed message if they provide one. Works in
+    both directions: an owner's complaint about a member warns the member;
+    a member's complaint about a gym warns that gym's owner.
+    """
+    from ..services.email_service import default_warning_message, send_complaint_warning
+
+    c = db.get(Complaint, complaint_id)
+    if not c:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Complaint not found")
+
+    category = c.category or "other"
+    message = payload.custom_message.strip() if payload.custom_message and payload.custom_message.strip() else default_warning_message(category)
+    used_custom = bool(payload.custom_message and payload.custom_message.strip())
+
+    if c.raised_by_owner_id:
+        target = db.get(User, c.against_user_id) if c.against_user_id else None
+        if not target:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST,
+                                "No user to warn on this complaint.")
+        sent = send_complaint_warning(
+            target.email, target.full_name, subject=c.subject, message=message,
+            complaint_category=category, admin_note=payload.admin_note,
+        )
+        recipient_desc = f"user {target.email}"
+    elif c.raised_by_user_id:
+        gym = db.get(Gym, c.gym_id) if c.gym_id else None
+        owner = db.get(GymOwner, gym.owner_id) if gym and gym.owner_id else None
+        if not owner:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST,
+                                "No gym owner to warn on this complaint.")
+        sent = send_complaint_warning(
+            owner.email, owner.full_name, subject=c.subject, message=message,
+            complaint_category=category, admin_note=payload.admin_note,
+        )
+        recipient_desc = f"gym owner {owner.email}"
+    else:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST,
+                            "This complaint has no identifiable target to warn.")
+
+    _log(db, admin.id, "complaint_warning_sent", "complaint", complaint_id,
+         {"recipient": recipient_desc, "used_custom_message": used_custom,
+          "email_delivered": sent})
+    db.commit()
+
+    return {
+        "success": True,
+        "complaint_id": complaint_id,
+        "recipient": recipient_desc,
+        "message_used": message,
+        "used_custom_message": used_custom,
+        "email_delivered": sent,
+    }
 
 
 # ------------------------------------------------------------------- audit

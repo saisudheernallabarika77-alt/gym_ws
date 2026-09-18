@@ -189,3 +189,87 @@ def send_due_warning(to_email: str, name: str, gym_name: str,
         text=(f"Payment reminder: Rs.{amount} for {gym_name} was due {due_date}. "
               f"{grace_days} days of grace remain."),
     )
+
+
+# Auto-generated wording per complaint category, used when the admin sends a
+# warning without typing a custom message. Kept short and factual - the
+# admin's own note (if any) is appended below this in the email body.
+_WARNING_TEMPLATES: dict[str, str] = {
+    "payment_default": (
+        "A gym you are a member of has reported that your membership payment "
+        "is overdue. Please clear the pending amount from the Fitora app as "
+        "soon as possible to avoid further action on your account."
+    ),
+    "misconduct": (
+        "A gym you are a member of has raised a conduct complaint against "
+        "you. Please review the gym's rules. Repeated complaints can lead to "
+        "your membership being removed and your account being restricted."
+    ),
+    "damage": (
+        "A gym you are a member of has reported damage to their equipment or "
+        "property associated with your visits. Please get in touch with the "
+        "gym directly to resolve this."
+    ),
+    "service_issue": (
+        "A member has reported a service issue with your gym. Please review "
+        "your facilities and member experience. Repeated complaints can "
+        "affect your gym's standing on Fitora."
+    ),
+    "fraud": (
+        "A member has raised a fraud or billing-dispute complaint against "
+        "your gym. This is taken seriously - please be prepared to explain "
+        "your pricing and charges if the admin follows up."
+    ),
+    "safety": (
+        "A member has raised a safety concern about your gym. Please review "
+        "your facilities and equipment condition promptly."
+    ),
+    "billing": (
+        "A member has raised a billing complaint about your gym. Please "
+        "ensure your published pricing matches what members are actually charged."
+    ),
+    "other": (
+        "A complaint has been raised concerning your account on Fitora. "
+        "Please review the details below."
+    ),
+}
+
+
+def default_warning_message(category: str) -> str:
+    """The auto-generated wording for a category, exposed so the admin UI
+    can show/edit it before sending, or send it as-is."""
+    return _WARNING_TEMPLATES.get(category, _WARNING_TEMPLATES["other"])
+
+
+def send_complaint_warning(
+    to_email: str, name: str, *, subject: str, message: str,
+    complaint_category: str, admin_note: str | None = None,
+) -> bool:
+    """
+    Sent by the admin from the Complaints screen, to either the user a gym
+    owner complained about, or the gym owner a member complained about.
+    `message` is either the auto-generated template (see
+    default_warning_message) or whatever the admin typed - the caller
+    decides which, this function just sends it.
+    """
+    body = (
+        f'<div style="background:#2a1a13;border:1px solid #5a3420;border-radius:12px;padding:16px;">'
+        f'<div style="font-size:13px;color:#ffb27a;font-weight:600;margin-bottom:6px;">'
+        f'Warning &middot; {complaint_category.replace("_", " ").title()}</div>'
+        f'<div style="font-size:14px;color:#e6e8ec;line-height:1.7;">{message}</div>'
+        f'</div>'
+        + (f'<p style="font-size:13px;color:#a8adb8;margin-top:14px;line-height:1.6;">'
+           f'<b>Note from Fitora admin:</b> {admin_note}</p>' if admin_note else '')
+    )
+    return _send(
+        to_email,
+        subject=f"Fitora warning: {subject}",
+        html=_shell(
+            title="A warning has been issued on your account",
+            intro=f"Hi {name},",
+            body_html=body,
+            footer="If you believe this is a mistake, reply to this email or contact Fitora support.",
+        ),
+        text=f"Fitora warning ({complaint_category}): {message}"
+             + (f"\n\nAdmin note: {admin_note}" if admin_note else ""),
+    )
