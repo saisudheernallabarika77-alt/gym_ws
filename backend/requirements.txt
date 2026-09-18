@@ -1,0 +1,32 @@
+# --- Web framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.10.4
+pydantic-settings==2.7.0
+email-validator==2.2.0
+
+# --- Database ---
+sqlalchemy==2.0.36
+alembic==1.14.0
+psycopg2-binary==2.9.10
+geoalchemy2==0.16.0
+
+# --- Auth & security ---
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.1
+python-jose[cryptography]==3.3.0
+pyjwt==2.10.1
+
+# --- RAG / AI ---
+chromadb>=0.5.23,<0.6
+sentence-transformers==3.3.1
+ollama>=0.4.5
+
+# --- Utilities ---
+qrcode[pil]==8.0
+pillow==11.0.0
+httpx>=0.27
+python-dotenv==1.0.1
+jinja2==3.1.5
+reportlab==4.2.5

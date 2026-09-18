@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-sans);
+}
+
+@layer base {
+  * {
+    @apply border-ink-800;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-ink-950 text-ink-100 antialiased;
+    background-image: theme("backgroundImage.dark-mesh");
+    background-attachment: fixed;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Scrollbar — slim and dark so it doesn't fight the layout */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { @apply bg-ink-950; }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink-800 rounded-full border-2 border-solid border-ink-950;
+  }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-ink-700; }
+
+  ::selection { @apply bg-brand-500/30 text-white; }
+
+  input, textarea, select { @apply text-base sm:text-sm; }
+
+  /* Hide number input spinners — fee/weight fields read better without them */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+}
+
+@layer components {
+  /* ---------------------------------------------------------- surfaces */
+  .card {
+    @apply bg-ink-900/70 backdrop-blur-sm border border-ink-800 rounded-2xl;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-300
+           hover:border-ink-700 hover:bg-ink-900
+           hover:shadow-[0_8px_30px_-12px_rgba(0,0,0,.6)];
+  }
+
+  .glass {
+    @apply bg-ink-900/60 backdrop-blur-xl border border-white/[.06];
+  }
+
+  /* ---------------------------------------------------------- buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl
+           font-medium transition-all duration-200
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60
+           focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950
+           disabled:opacity-50 disabled:pointer-events-none
+           active:scale-[.98];
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-gradient text-white
+           shadow-[0_4px_20px_-6px_rgba(255,77,46,.6)]
+           hover:shadow-[0_6px_28px_-6px_rgba(255,77,46,.75)]
+           hover:brightness-110;
+  }
+
+  .btn-secondary {
+    @apply btn bg-ink-800 text-ink-100 border border-ink-700
+           hover:bg-ink-700 hover:border-ink-600;
+  }
+
+  .btn-ghost {
+    @apply btn text-ink-300 hover:text-white hover:bg-ink-800/70;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger/15 text-danger border border-danger/30
+           hover:bg-danger/25;
+  }
+
+  .btn-sm { @apply px-3 py-1.5 text-xs; }
+  .btn-md { @apply px-4 py-2.5 text-sm; }
+  .btn-lg { @apply px-6 py-3.5 text-base; }
+
+  /* ----------------------------------------------------------- inputs */
+  .input {
+    @apply w-full bg-ink-900/80 border border-ink-800 rounded-xl
+           px-4 py-3 text-ink-50 placeholder-ink-500
+           transition-all duration-200
+           focus:outline-none focus:border-brand-500/70
+           focus:ring-2 focus:ring-brand-500/20
+           disabled:opacity-60;
+  }
+
+  .label {
+    @apply block text-xs font-medium text-ink-300 mb-1.5;
+  }
+
+  .field-error {
+    @apply text-xs text-danger mt-1.5;
+  }
+
+  /* ------------------------------------------------------------ chips */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full
+           px-3 py-1 text-xs font-medium border;
+  }
+
+  .chip-brand  { @apply chip bg-brand-500/[.12] text-brand-300 border-brand-500/25; }
+  .chip-muted  { @apply chip bg-ink-800/80 text-ink-300 border-ink-700; }
+  .chip-success{ @apply chip bg-success/[.12] text-success border-success/25; }
+  .chip-warning{ @apply chip bg-warning/[.12] text-warning border-warning/25; }
+  .chip-danger { @apply chip bg-danger/[.12]  text-danger  border-danger/25; }
+
+  /* ---------------------------------------------------------- effects */
+  .gradient-text {
+    @apply bg-brand-gradient bg-clip-text text-transparent;
+  }
+
+  .skeleton {
+    @apply bg-ink-800 rounded-lg relative overflow-hidden;
+    background-image: linear-gradient(
+      90deg,
+      theme("colors.ink.800") 0%,
+      theme("colors.ink.700") 50%,
+      theme("colors.ink.800") 100%
+    );
+    background-size: 1000px 100%;
+    @apply animate-shimmer;
+  }
+
+  .divider { @apply h-px bg-ink-800; }
+
+  /* Hairline top border used on section headers */
+  .rule {
+    @apply relative;
+  }
+  .rule::before {
+    content: "";
+    @apply absolute -top-px left-0 right-0 h-px;
+    background: linear-gradient(
+      90deg, transparent, theme("colors.brand.500/40"), transparent
+    );
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .text-balance { text-wrap: balance; }
+
+  /* Stagger helper for list entrance animations */
+  .stagger > * { animation-fill-mode: both; }
+  .stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger > *:nth-child(2) { animation-delay: 45ms; }
+  .stagger > *:nth-child(3) { animation-delay: 90ms; }
+  .stagger > *:nth-child(4) { animation-delay: 135ms; }
+  .stagger > *:nth-child(5) { animation-delay: 180ms; }
+  .stagger > *:nth-child(6) { animation-delay: 225ms; }
+  .stagger > *:nth-child(7) { animation-delay: 270ms; }
+  .stagger > *:nth-child(8) { animation-delay: 315ms; }
+}
+
+/* Respect the OS setting — animations are decoration, never the only signal */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

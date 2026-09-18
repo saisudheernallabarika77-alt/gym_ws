@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Env / secrets
+.env
+.env.local
+backend/.env
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+backend/chroma_db/
+
+# Uploads
+backend/uploads/
+
+# Node
+node_modules/
+.next/
+frontend/.env.local
+
+# OS
+.DS_Store

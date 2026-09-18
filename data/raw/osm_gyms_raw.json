@@ -1,0 +1,298 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-09-18T09:43:21Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "node",
+      "id": 6512939411,
+      "lat": 16.9942889,
+      "lon": 82.2445436,
+      "tags": {
+        "leisure": "park",
+        "name": "Open Gym"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6512958049,
+      "lat": 16.9849317,
+      "lon": 82.246329,
+      "tags": {
+        "leisure": "fitness_centre",
+        "name": "SAAP Indoor stadium"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6512958050,
+      "lat": 16.9841776,
+      "lon": 82.2459643,
+      "tags": {
+        "leisure": "fitness_centre",
+        "name": "Sports Authority Gym",
+        "sport": "fitness"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6512984994,
+      "lat": 16.984157,
+      "lon": 82.2441296,
+      "tags": {
+        "leisure": "fitness_centre",
+        "name": "Jntu Kakinada Indoor Stadium"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6512991111,
+      "lat": 16.986315,
+      "lon": 82.2475769,
+      "tags": {
+        "leisure": "fitness_centre",
+        "name": "Open Air Gym"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6514708314,
+      "lat": 16.9609913,
+      "lon": 82.2337892,
+      "tags": {
+        "addr:street": "vivekanada park",
+        "leisure": "sports_centre",
+        "name": "Public Gym In Vivekananda Park",
+        "sport": "fitness",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12270860098,
+      "lat": 17.0060574,
+      "lon": 81.7856658,
+      "tags": {
+        "leisure": "fitness_centre",
+        "level": "0",
+        "name": "Prasad’s Fitness centre"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12596092934,
+      "lat": 16.9848832,
+      "lon": 82.2464226,
+      "tags": {
+        "leisure": "fitness_centre"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12751684912,
+      "lat": 17.0257913,
+      "lon": 81.7215246,
+      "tags": {
+        "addr:city": "Kovvur",
+        "addr:district": "East Godavari District",
+        "addr:housenumber": "14-12-7/12",
+        "addr:postcode": "534350",
+        "addr:street": "Healing Pathway",
+        "leisure": "fitness_centre",
+        "name": "Cosmic Healing Center",
+        "opening_hours": "Mo-Su 09:00-21:00",
+        "phone": "+919291345135",
+        "sport": "yoga"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13033316734,
+      "lat": 16.9881699,
+      "lon": 82.2404627,
+      "tags": {
+        "blind": "no",
+        "leisure": "fitness_station",
+        "sport": "fitness",
+        "wheelchair": "no"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13086421042,
+      "lat": 16.7502469,
+      "lon": 81.6787995,
+      "tags": {
+        "leisure": "park",
+        "name": "Gym Park"
+      }
+    },
+    {
+      "type": "way",
+      "id": 373151785,
+      "center": {
+        "lat": 16.569659,
+        "lon": 81.5212728
+      },
+      "tags": {
+        "building": "yes",
+        "name": "Vishnu fitness centre"
+      }
+    },
+    {
+      "type": "way",
+      "id": 373162228,
+      "center": {
+        "lat": 16.5648716,
+        "lon": 81.5207178
+      },
+      "tags": {
+        "building": "yes",
+        "name": "Boys GYM"
+      }
+    },
+    {
+      "type": "way",
+      "id": 542030715,
+      "center": {
+        "lat": 16.7548537,
+        "lon": 81.679137
+      },
+      "tags": {
+        "building": "yes",
+        "name": "NCC building & GYM"
+      }
+    },
+    {
+      "type": "way",
+      "id": 719123701,
+      "center": {
+        "lat": 16.9749384,
+        "lon": 82.2443129
+      },
+      "tags": {
+        "leisure": "fitness_station",
+        "sport": "fitness"
+      }
+    },
+    {
+      "type": "way",
+      "id": 749667669,
+      "center": {
+        "lat": 16.9899342,
+        "lon": 82.2492859
+      },
+      "tags": {
+        "leisure": "fitness_station",
+        "sport": "fitness"
+      }
+    },
+    {
+      "type": "way",
+      "id": 749674932,
+      "center": {
+        "lat": 16.9842352,
+        "lon": 82.2459832
+      },
+      "tags": {
+        "building": "yes",
+        "leisure": "fitness_centre",
+        "name": "Sport authority gym."
+      }
+    },
+    {
+      "type": "way",
+      "id": 749674933,
+      "center": {
+        "lat": 16.984914,
+        "lon": 82.2463391
+      },
+      "tags": {
+        "landuse": "recreation_ground",
+        "name": "Gymnastics centre"
+      }
+    },
+    {
+      "type": "way",
+      "id": 799724647,
+      "center": {
+        "lat": 16.8597597,
+        "lon": 81.4949276
+      },
+      "tags": {
+        "addr:city": "tadepalli",
+        "addr:postcode": "534101",
+        "addr:street": "tadepalli to ramanagudem road",
+        "building": "college",
+        "building:levels": "2",
+        "height": "120mta",
+        "name": "Indore games and gym"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1324008952,
+      "center": {
+        "lat": 16.9341057,
+        "lon": 82.225736
+      },
+      "tags": {
+        "building": "yes",
+        "leisure": "fitness_centre",
+        "name": "GNR"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1324008957,
+      "center": {
+        "lat": 16.9338165,
+        "lon": 82.2259643
+      },
+      "tags": {
+        "building": "yes",
+        "leisure": "fitness_centre"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1324033307,
+      "center": {
+        "lat": 17.0043549,
+        "lon": 81.7414901
+      },
+      "tags": {
+        "building": "yes",
+        "leisure": "fitness_centre"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1324902044,
+      "center": {
+        "lat": 16.9563462,
+        "lon": 82.2448759
+      },
+      "tags": {
+        "building": "yes",
+        "leisure": "fitness_centre",
+        "name": "Revive Gym"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1423831933,
+      "center": {
+        "lat": 16.7502347,
+        "lon": 81.6788183
+      },
+      "tags": {
+        "leisure": "park",
+        "name": "Gym Park"
+      }
+    }
+  ]
+}
