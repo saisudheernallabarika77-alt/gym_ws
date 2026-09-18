@@ -1,6 +1,26 @@
 # Fitora — Command Reference
 
-Every command needed to set up, run, test, and troubleshoot this project, in one place.
+## ⭐ Run the whole project — one command
+
+```bash
+./start.sh
+```
+
+That's it. Run this from the project root (`gym_ws/`) after [first-time setup](#first-time-setup)
+has been done once. It starts the backend and frontend together, prints the link for
+this machine **and** the link teammates on the same WiFi/LAN can use, and keeps running
+in the foreground — press `Ctrl+C` to stop both, or run `./stop.sh` from another terminal.
+
+```bash
+./stop.sh    # stops both servers
+```
+
+If `permission denied`, run `chmod +x start.sh stop.sh` once.
+
+---
+
+Everything below is the full reference — individual commands for setup, testing,
+troubleshooting, and anything `start.sh` does under the hood.
 All backend commands assume you're in `backend/` with the virtualenv at `backend/venv/`.
 All frontend commands assume you're in `frontend/`.
 

@@ -361,6 +361,10 @@ gym_ws/
 
 ## Running it locally
 
+> **Already set up once?** Just run `./start.sh` from the project root — it starts
+> both servers together and prints the link for this machine and for teammates on
+> the same network. `./stop.sh` stops both. See `COMMANDS.md` for the full reference.
+
 ### Prerequisites
 
 - Python 3.10+
