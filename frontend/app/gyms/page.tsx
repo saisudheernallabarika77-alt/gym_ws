@@ -1,9 +1,10 @@
 "use client";
 
 import {
-  CreditCard, Filter, MapPin, MessageSquare, Search, SlidersHorizontal,
-  User, X,
+  CreditCard, Filter, MapPin, MapPinned, MessageSquare, Search,
+  SlidersHorizontal, User, X,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppShell, PageHeader, type NavItem } from "@/components/AppShell";
 import { GymCard, type GymCardData } from "@/components/GymCard";
@@ -84,6 +85,12 @@ export default function GymsPage() {
         <PageHeader
           title="Browse gyms"
           subtitle={`${total} gyms within 100 km of Kakinada`}
+          action={
+            <Link href="/gyms/map" className="btn-secondary btn-sm">
+              <MapPinned className="w-4 h-4" />
+              Map view
+            </Link>
+          }
         />
 
         {/* --------------------------------------------------- search bar */}

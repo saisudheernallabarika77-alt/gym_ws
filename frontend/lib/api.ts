@@ -182,6 +182,7 @@ export const api = {
     return request(`/gyms?${q}`);
   },
   gymFilters: () => request("/gyms/filters", { auth: false }),
+  mapPoints: () => request("/gyms/map/points", { auth: false }),
   gym: (code: string, lat?: number, lon?: number) => {
     const q = lat != null ? `?lat=${lat}&lon=${lon}` : "";
     return request(`/gyms/${code}${q}`);

@@ -188,6 +188,48 @@ def filter_options(db: DbSession):
     }
 
 
+@router.get("/map/points")
+def map_points(db: DbSession):
+    """
+    Every active gym as a lightweight map pin - deliberately unpaginated
+    (there are only a few hundred gyms total) and stripped to just what a
+    map marker and its popup need, so this loads fast even on a slow
+    connection. Registered before /{gym_code} so "map" is never matched as
+    a gym_code path parameter.
+
+    is_real_listing flags the handful of gyms sourced from real OpenStreetMap
+    data versus the realistic demo listings that fill out the rest of the
+    catalogue - the map marks these differently so nobody mistakes a demo
+    pin for a real, physically-visitable gym.
+    """
+    rows = (db.query(Gym)
+            .filter(Gym.status == GymStatus.active,
+                    Gym.latitude.isnot(None), Gym.longitude.isnot(None))
+            .all())
+    return {
+        "total": len(rows),
+        "real_count": sum(1 for g in rows if g.data_source == "openstreetmap"),
+        "points": [{
+            "gym_code": g.gym_code,
+            "name": g.name,
+            "slug": g.slug,
+            "latitude": g.latitude,
+            "longitude": g.longitude,
+            "locality": g.locality,
+            "district": g.district,
+            "monthly_fee": g.monthly_fee,
+            "coach_included": g.coach_included,
+            "coach_fee_separate": g.coach_fee_separate,
+            "ac_status": "AC" if g.is_air_conditioned else "Non-AC",
+            "gym_type": g.gym_type,
+            "rating": g.rating,
+            "review_count": g.review_count,
+            "cover_image": g.cover_image,
+            "is_real_listing": g.data_source == "openstreetmap",
+        } for g in rows],
+    }
+
+
 @router.get("/{gym_code}")
 def gym_detail(gym_code: str, db: DbSession, user: OptionalUser,
                lat: float | None = None, lon: float | None = None):
