@@ -10,8 +10,10 @@ The exact flow from the spec:
 """
 from __future__ import annotations
 from datetime import date, datetime, timedelta
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, status
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from ..core.config import settings
@@ -496,8 +498,8 @@ def get_pass(membership_code: str, db: DbSession, user: CurrentUser):
     return view
 
 
-@router.get("/diet/{membership_code}")
-def get_diet(membership_code: str, db: DbSession, user: CurrentUser):
+def _load_diet(membership_code: str, db, user) -> dict[str, Any]:
+    """Shared by the JSON view and the PDF download so both render identical data."""
     ms = (db.query(Membership)
           .filter(Membership.membership_code == membership_code.upper()).first())
     if not ms or ms.user_id != user.id:
@@ -512,8 +514,11 @@ def get_diet(membership_code: str, db: DbSession, user: CurrentUser):
         age=_age_of(user), gender=user.gender or "Male",
         goal=dp.goal.value, target_weight_kg=ms.target_weight_kg,
     )
+    gym = db.get(Gym, ms.gym_id)
     return {
         "membership_code": ms.membership_code,
+        "member_name": user.full_name,
+        "gym_name": gym.name if gym else "",
         "goal": dp.goal.value,
         "goal_label": GOAL_LABEL.get(dp.goal.value, dp.goal.value),
         "targets": {
@@ -531,6 +536,44 @@ def get_diet(membership_code: str, db: DbSession, user: CurrentUser):
         "avoid": full["avoid"],
         "disclaimer": full["disclaimer"],
     }
+
+
+@router.get("/diet/{membership_code}")
+def get_diet(membership_code: str, db: DbSession, user: CurrentUser):
+    data = _load_diet(membership_code, db, user)
+    # member_name/gym_name are only needed by the PDF renderer, not this
+    # existing response shape - drop them so nothing else has to change.
+    data.pop("member_name", None)
+    data.pop("gym_name", None)
+    return data
+
+
+@router.get("/diet/{membership_code}/pdf")
+def download_diet_pdf(membership_code: str, db: DbSession, user: CurrentUser):
+    """Same data as GET /diet/{code}, rendered as a downloadable PDF."""
+    from ..services.pdf_service import build_diet_chart_pdf
+
+    data = _load_diet(membership_code, db, user)
+    pdf_bytes = build_diet_chart_pdf(
+        member_name=data["member_name"],
+        gym_name=data["gym_name"],
+        membership_code=data["membership_code"],
+        goal_label=data["goal_label"],
+        targets=data["targets"],
+        current_weight_kg=data["current_weight_kg"],
+        target_weight_kg=data["target_weight_kg"],
+        estimated_weeks_to_target=data["estimated_weeks_to_target"],
+        chart=data["chart"],
+        tips=data["tips"],
+        avoid=data["avoid"],
+        disclaimer=data["disclaimer"],
+    )
+    filename = f"Fitora-Diet-Chart-{data['membership_code']}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # ----------------------------------------------------------- my memberships

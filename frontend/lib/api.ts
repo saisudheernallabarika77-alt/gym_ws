@@ -201,6 +201,30 @@ export const api = {
   pay: (ref: string, body: any) => request(`/pay/${ref}`, { method: "POST", body }),
   pass: (membershipCode: string) => request(`/pass/${membershipCode}`),
   diet: (membershipCode: string) => request(`/diet/${membershipCode}`),
+  /**
+   * Downloads the diet chart PDF and saves it via the browser - a plain
+   * <a href> can't be used here because the endpoint requires the bearer
+   * token, so this fetches the file as a blob and triggers the save itself.
+   */
+  downloadDietPdf: async (membershipCode: string): Promise<void> => {
+    const token = getToken("user");
+    const res = await fetch(`${BASE}${PREFIX}/diet/${membershipCode}/pdf`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new ApiError(data?.detail ?? "Could not download the diet chart", res.status, data);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Fitora-Diet-Chart-${membershipCode}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
   myMemberships: () => request("/my/memberships"),
   review: (body: any) => request("/reviews", { method: "POST", body }),
   raiseComplaint: (body: { gym_code: string; category: string; subject: string; details?: string }) =>

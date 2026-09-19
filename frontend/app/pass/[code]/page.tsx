@@ -2,14 +2,14 @@
 
 import { motion } from "framer-motion";
 import {
-  Apple, Calendar, CreditCard, Dumbbell, Droplet, Flame, MapPin,
+  Apple, Calendar, CreditCard, Dumbbell, Download, Droplet, Flame, MapPin,
   MessageSquare, Phone, Search, Sparkles, User, Utensils,
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AppShell, type NavItem } from "@/components/AppShell";
-import { Avatar, Chip, EmptyState, Skeleton, Tabs } from "@/components/ui";
+import { Avatar, Button, Chip, EmptyState, Skeleton, Tabs } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { cn, formatDate, rupees } from "@/lib/utils";
 
@@ -28,6 +28,7 @@ export default function PassPage() {
   const [pass, setPass] = useState<any>(null);
   const [diet, setDiet] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     Promise.all([api.pass(code), api.diet(code).catch(() => null)])
@@ -38,6 +39,17 @@ export default function PassPage() {
       .catch((err) => toast.error(err instanceof ApiError ? err.message : "Could not load pass"))
       .finally(() => setLoading(false));
   }, [code]);
+
+  async function downloadDiet() {
+    setDownloading(true);
+    try {
+      await api.downloadDietPdf(code);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Could not download the diet chart");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -171,10 +183,15 @@ export default function PassPage() {
             className="mt-6 space-y-5"
           >
             <div className="card p-5">
-              <h2 className="font-semibold flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-brand-400" />
-                {diet.goal_label} plan
-              </h2>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-semibold flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-brand-400" />
+                  {diet.goal_label} plan
+                </h2>
+                <Button size="sm" variant="secondary" icon={Download} loading={downloading} onClick={downloadDiet}>
+                  Download PDF
+                </Button>
+              </div>
               <div className="grid grid-cols-4 gap-2 mt-4 text-center">
                 <div>
                   <Flame className="w-4 h-4 text-warning mx-auto" />
